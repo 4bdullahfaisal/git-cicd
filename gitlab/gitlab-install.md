@@ -179,7 +179,7 @@ docker compose ps
 docker compose logs -f gitlab
 
 # Get root password again
-docker exec -it gitlab grep 'Password:' /etc/gitlab/initial_root_password
+docker exec -it gitlab grep 'Password:' //etc/gitlab/initial_root_password
 
 # Enter runner container
 docker exec -it runner bash
