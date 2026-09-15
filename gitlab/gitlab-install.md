@@ -53,7 +53,6 @@ services:
     image: gitlab/gitlab-ce:latest
     container_name: gitlab
     hostname: gitlab.local
-    restart: always
     shm_size: '256m'
     ports:
       - "8929:8929"
@@ -76,7 +75,6 @@ services:
   runner:
     image: gitlab/gitlab-runner:latest
     container_name: gitlab-runner
-    restart: always
     depends_on:
       - gitlab
     volumes:
