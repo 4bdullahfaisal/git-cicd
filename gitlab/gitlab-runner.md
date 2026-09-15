@@ -21,7 +21,7 @@ A GitLab Runner is a lightweight agent that executes CI/CD jobs defined in `.git
 
 ### 1.1 Get GitLab Registration Token
 
-1. Open GitLab: `http://localhost:8082`
+1. Open GitLab: `http://gitlab.local:8929`
 2. Go to **Admin** → **Runners**
 3. Copy the registration token (starts with `GR134894...`)
 
@@ -33,7 +33,7 @@ docker exec -it gitlab-runner bash
 
 # Register the runner
 gitlab-runner register \
-  --url http://host.docker.internal:8082 \
+  --url http://gitlab.local:8929 \
   --registration-token YOUR_TOKEN \
   --executor docker \
   --docker-image alpine:latest \
