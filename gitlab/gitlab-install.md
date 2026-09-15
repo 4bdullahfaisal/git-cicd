@@ -31,9 +31,6 @@ GitLab is a complete DevOps platform that provides source code management (Git),
 gitlab/
 │
 ├── docker-compose.yml
-│
-├── runner/
-│   └── dockerfile
 ```
 
 ## Step 1: Create Data Directory
@@ -51,22 +48,21 @@ cd gitlab
 ### `gitlab/docker-compose.yml`
 
 ```yaml
-version: "3.8"
-
 services:
   gitlab:
     image: gitlab/gitlab-ce:latest
     container_name: gitlab
-    hostname: gitlab
+    hostname: gitlab.local
     restart: always
+    shm_size: '256m'
     ports:
       - "8929:8929"
-      - "443:443"
-      - "22:22"
+      - "8443:443"
+      - "2222:22"
     environment:
       GITLAB_OMNIBUS_CONFIG: |
         external_url 'http://gitlab.local:8929'
-        gitlab_rails['gitlab_shell_ssh_port'] = 22
+        gitlab_rails['gitlab_shell_ssh_port'] = 2222
     volumes:
       - gitlab_config:/etc/gitlab
       - gitlab_logs:/var/log/gitlab
@@ -76,6 +72,19 @@ services:
         ipv4_address: 172.28.0.10
         aliases:
           - gitlab.local
+
+  runner:
+    image: gitlab/gitlab-runner:latest
+    container_name: gitlab-runner
+    restart: always
+    depends_on:
+      - gitlab
+    volumes:
+      - runner_config:/etc/gitlab-runner
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      gitlab-net:
+        ipv4_address: 172.28.0.11
 
 networks:
   gitlab-net:
@@ -88,6 +97,7 @@ volumes:
   gitlab_config:
   gitlab_logs:
   gitlab_data:
+  runner_config:
 ```
 
 ## Port Mapping Explanation
@@ -95,8 +105,8 @@ volumes:
 | Port | Purpose |
 |------|---------|
 | `-p 8929:8929` | Web UI (http://gitlab.local:8929) |
-| `-p 443:443` | HTTPS (SSL) |
-| `-p 22:22` | SSH for Git operations |
+| `-p 8443:443` | HTTPS (host 8443 → container 443) |
+| `-p 2222:22` | SSH for Git operations (host 2222 → container 22) |
 
 ---
 
@@ -223,46 +233,5 @@ docker compose down -v
 docker system prune -f
 # Then start fresh
 ```
-
----
-
-## GitLab Runner
-
-```bash
-├── runner/
-│   └── dockerfile
-```
-
-## Dockerfile
-
-```
-FROM oraclelinux:9
-
-RUN dnf install -y curl git openssh-clients tar which shadow-utils && \
-    curl -L "https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.rpm.sh" | bash && \
-    dnf install -y gitlab-runner && \
-    dnf clean all
-
-WORKDIR /home/gitlab-runner
-
-ENTRYPOINT ["gitlab-runner"]
-CMD ["run", "--working-directory=/home/gitlab-runner", "--config=/etc/gitlab-runner/config.toml"]
-```
-
-To run CI/CD pipelines, install GitLab Runner:
-
-```bash
-# Build image
-docker build -t runner ./runner
-
-# Run it 
-docker run -d --name gitlab-runner \
-  --restart always \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  -v /c/gitlab-runner/config:/etc/gitlab-runner \
-  gitlab/gitlab-runner:latest
-```
-
-Register runner using token from GitLab UI (Projects → Settings → CI/CD → Runners).
 
 ---
