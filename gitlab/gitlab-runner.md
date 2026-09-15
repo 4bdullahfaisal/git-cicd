@@ -17,62 +17,15 @@ A GitLab Runner is a lightweight agent that executes CI/CD jobs defined in `.git
 
 ---
 
-## Step 1: Folder Structure
+## Step 1: Register Runners with GitLab
 
-```
-runner/
-├── dockerfile
-```
-
----
-
-## Step 2: Dockerfile
-
-### `runner/dockerfile`
-
-```dockerfile
-FROM oraclelinux:9
-
-RUN dnf install -y curl git openssh-clients tar which shadow-utils && \
-    curl -L "https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.rpm.sh" | bash && \
-    dnf install -y gitlab-runner && \
-    dnf clean all
-
-WORKDIR /home/gitlab-runner
-
-ENTRYPOINT ["gitlab-runner"]
-CMD ["run", "--working-directory=/home/gitlab-runner", "--config=/etc/gitlab-runner/config.toml"]
-```
-
-
-## Step 3: build and run container
-
-```bash
-# Build the image
-docker build -t runner .
-
-# Run the container (with Docker socket mount for Docker executor)
-docker run -d \
-  --name gitlab-runner \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  -v /etc/gitlab-runner/config.toml:/etc/gitlab-runner/config.toml \
-  runner
-
-# Or for shell executor (simpler):
-docker run -d --name gitlab-runner runner
-```
-
----
-
-## Step 4: Register Runners with GitLab
-
-### 4.1 Get GitLab Registration Token
+### 1.1 Get GitLab Registration Token
 
 1. Open GitLab: `http://localhost:8082`
 2. Go to **Admin** → **Runners**
 3. Copy the registration token (starts with `GR134894...`)
 
-### 4.2 Register Oracle Runner
+### 1.2 Register Oracle Runner
 
 ```bash
 # Enter container
@@ -108,7 +61,7 @@ gitlab-runner register
 
 ---
 
-## Step 5: Verify Runners
+## Step 2: Verify Runners
 
 ```bash
 # List all runners
@@ -120,7 +73,7 @@ gitlab-runner verify
 
 ---
 
-## Step 6: Test with a Pipeline
+## Step 3: Test with a Pipeline
 
 ### Create `.gitlab-ci.yml` in your GitLab project:
 
@@ -147,14 +100,6 @@ oracle-job:
 ## Commands Summary
 
 ```bash
-# Build image
-docker build -t runner .
-
-# Start container
-docker run -d --name gitlab-runner runner
-
-# Enter container
-docker exec -it gitlab-runner bash
 
 # Register runner
 gitlab-runner register --url URL --registration-token TOKEN --executor shell
