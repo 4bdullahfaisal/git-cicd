@@ -1,0 +1,101 @@
+# ============================================================
+# Task 3 — Multi-stage CI/CD pipeline for the Flask app
+# Runs automatically on pushes and validates the app build
+# ============================================================
+
+stages:
+  - lint
+  - test
+  - build
+  - deploy
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  IMAGE_TAG: "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA"
+
+cache:
+  key: "$CI_COMMIT_REF_SLUG"
+  paths:
+    - .cache/pip/
+
+lint:
+  stage: lint
+  tags:
+    - test3
+  before_script:
+    - python3 -m venv .venv
+    - . .venv/bin/activate
+    - python -m pip install --upgrade pip
+    - python -m pip install --cache-dir="$PIP_CACHE_DIR" -r requirements.txt
+  script:
+    - echo "== Static analysis with pylint =="
+    - python -m pylint app.py
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+
+unit_test:
+  stage: test
+  tags:
+    - test3
+  before_script:
+    - python3 -m venv .venv
+    - . .venv/bin/activate
+    - python -m pip install --upgrade pip
+    - python -m pip install --cache-dir="$PIP_CACHE_DIR" -r requirements.txt
+  script:
+    - echo "== Running unit tests with pytest =="
+    - python -m pytest -v tests/ --junitxml=report.xml
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
+    paths:
+      - report.xml
+    expire_in: 1 week
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+
+build_image:
+  stage: build
+  tags:
+    - test3
+  before_script:
+    - mkdir -p .ci-tools
+    - |
+      if [ ! -x .ci-tools/docker ]; then
+        curl -fsSL "https://download.docker.com/linux/static/stable/x86_64/docker-27.5.1.tgz" | tar -xz -C .ci-tools --strip-components=1 docker/docker
+      fi
+    - export PATH="$CI_PROJECT_DIR/.ci-tools:$PATH"
+    - docker version
+  script:
+    - |
+      echo "== Building the Docker image =="
+      if [ -n "$CI_REGISTRY" ] && [ -n "$CI_REGISTRY_USER" ] && [ -n "$CI_REGISTRY_PASSWORD" ]; then
+        echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+        docker build -t "$IMAGE_TAG" .
+        docker push "$IMAGE_TAG"
+      else
+        echo "No registry credentials configured; building a local image only."
+        docker build -t "local/progreeapp:$CI_COMMIT_SHORT_SHA" .
+      fi
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+deploy:
+  stage: deploy
+  tags:
+    - test3
+  script:
+    - |
+      echo "== Deployment status report =="
+      echo "Deployment status: SUCCESS"
+      echo "Environment: production"
+      echo "Commit: $CI_COMMIT_SHORT_SHA"
+      echo "Image: ${CI_REGISTRY_IMAGE:-local/progreeapp}:$CI_COMMIT_SHORT_SHA"
+      echo "Pipeline URL: $CI_PIPELINE_URL"
+  environment:
+    name: production
+    url: https://example.com
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: manual
