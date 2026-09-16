@@ -105,6 +105,37 @@ The `.gitlab-ci.yml` file defines four stages:
 
 The pipeline is configured for a GitLab Shell runner. Python jobs create a temporary virtual environment. The build job downloads the Docker CLI and uses the runner's mounted Docker socket.
 
+## Task 3 Requirements
+
+### Objective
+
+Build a multi-stage automated CI/CD deployment pipeline that runs the testing and integration workflow whenever code is pushed to the remote repository.
+
+### Requirement Coverage
+
+This project satisfies the task requirements with GitLab CI:
+
+| Requirement | Implementation |
+| --- | --- |
+| Automated workflow on remote pushes | `rules` run lint and tests for push pipelines, while build and deploy run on `main`. |
+| Automated code checkout | GitLab Runner fetches the pushed commit before every job. |
+| Static application linting | The `lint` stage installs dependencies and runs `python -m pylint app.py`. |
+| Unit testing | The `unit_test` stage runs `python -m pytest -v tests/` and creates `report.xml` as a JUnit artifact. |
+| Integration and image build | The `build_image` stage builds the production Docker image and pushes it when registry credentials are available. |
+| Deployment output status | The `deploy` stage logs deployment status, environment, commit, image, and pipeline URL. |
+| Execution board visibility | GitLab Pipelines displays stage status, job logs, test reports, artifacts, and deployment environment information. |
+
+### Pipeline Flow
+
+```text
+Remote push
+	|
+	v
+Lint -> Unit tests -> Docker build/push -> Manual deployment status
+```
+
+The pipeline is intentionally split into independent blocks so a failed lint or test job prevents later stages from being treated as successful. The deployment job is manual on `main`, allowing the build and test results to be reviewed before deployment is recorded.
+
 ## Health Check
 
 ```http
