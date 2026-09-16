@@ -1,59 +1,100 @@
-# Flask CI/CD Demo
+# Task 3 | Automated CI/CD Deployment Pipeline
 
-A small Flask web service used to demonstrate a complete GitLab CI/CD workflow. The project exposes a home page, a health check, and a pure Python function covered by automated tests.
+A production-ready Flask service with automated linting, testing, Docker image builds, and deployment status reporting through GitLab CI/CD.
 
-## Features
+[![Python](https://img.shields.io/badge/Python-3.12%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Flask](https://img.shields.io/badge/Flask-3.0.3-000000?logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
+[![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+[![GitLab CI](https://img.shields.io/badge/GitLab_CI/CD-enabled-FC6D26?logo=gitlab&logoColor=white)](https://docs.gitlab.com/ee/ci/)
+[![Tests](https://img.shields.io/badge/Tests-3_passing-2EA44F?logo=pytest&logoColor=white)](https://docs.pytest.org/)
+[![Pylint](https://img.shields.io/badge/Pylint-10.00%2F10-2EA44F?logo=python&logoColor=white)](https://pylint.readthedocs.io/)
 
-- Flask application served by Gunicorn in production.
-- `GET /` returns an environment-aware greeting.
-- `GET /health` returns a JSON health response.
-- Unit tests for the application and `add` function.
-- Pylint static analysis.
-- Multi-stage CI pipeline with lint, test, build, and deploy stages.
-- Multi-stage Docker image based on Python 3.12.
+## What This Project Does
 
-## Task 3: Multi-Stage Automated CI/CD Deployment Pipeline
+This project fulfills Task 3 by running an automated workflow whenever code is pushed to the remote repository. GitLab Runner checks out the code, analyzes it, tests it, builds a Docker image, and reports the deployment result in the GitLab pipeline dashboard.
 
-### Objective
+The source is stored in GitHub for version control and sharing. GitLab CI executes the pipeline defined in `.gitlab-ci.yml`.
 
-Automate testing and integration whenever code is pushed to the remote GitLab repository. The pipeline validates the application, builds a deployable Docker image, and reports deployment status.
+## Application Features
 
-### Requirement Mapping
+- Flask web application served by Gunicorn.
+- Home page with configurable application name and environment.
+- JSON health endpoint for monitoring.
+- Unit tests for the application routes and `add` function.
+- Production Docker image based on Python 3.12.
 
-| Assignment requirement | Project implementation |
-| --- | --- |
-| Automated CI/CD workflow | `.gitlab-ci.yml` defines the complete pipeline. |
-| Remote push execution | Lint and test run for push pipelines; build and deploy run for pushes to `main`. |
-| Automated code checkout | GitLab Runner checks out the pushed commit before every job. |
-| Static application linting | The `lint` job installs Pylint and runs `python -m pylint app.py`. |
-| Unit-testing suite | The `unit_test` job runs Pytest and publishes `report.xml` as a JUnit artifact. |
-| Build and integration | The `build_image` job builds the production Docker image and pushes it when registry credentials are available. |
-| Deployment output status | The `deploy` job logs environment, commit, image, and pipeline URL. |
-| Execution board visibility | GitLab Pipelines and job logs show each stage's status and output. |
+## Task 3 Requirements
 
-The project uses GitLab CI as the automation platform and a GitLab Shell Runner. GitHub stores the project source for sharing, while GitLab executes the CI/CD pipeline defined in `.gitlab-ci.yml`.
+### Automated remote workflow
+
+Every push starts the lint and test jobs. Pushes to `main` also enable the Docker build and deployment stages.
+
+### Automatic code checkout
+
+GitLab Runner automatically checks out the commit that triggered the pipeline before executing each job.
+
+### Static analysis
+
+The `lint` job installs the project dependencies and runs:
+
+```bash
+python -m pylint app.py
+```
+
+### Unit testing
+
+The `unit_test` job runs the Pytest suite and publishes `report.xml` as a JUnit test report:
+
+```bash
+python -m pytest -v tests/ --junitxml=report.xml
+```
+
+### Docker build and integration
+
+The `build_image` job builds the production image. When GitLab registry credentials are available, it logs in and pushes the image using the commit SHA as its tag.
+
+### Deployment status reporting
+
+The manual `deploy` job prints the deployment environment, commit SHA, image name, and pipeline URL to the GitLab job log. These results are visible from the GitLab pipeline dashboard.
+
+## Pipeline Stages
+
+```text
+Push to repository
+       |
+       v
+    Lint  --->  Test  --->  Build image  --->  Deploy status
+```
+
+The pipeline is configured for a GitLab Shell Runner. Python jobs create a temporary virtual environment. The build job downloads the Docker CLI and uses the runner's mounted Docker socket.
 
 ## Project Structure
 
 ```text
 .
-├── app.py
-├── Dockerfile
-├── requirements.txt
+├── app.py             Flask application
+├── Dockerfile         Production container definition
+├── requirements.txt   Pinned Python dependencies
 ├── tests/
-│   └── test_app.py
-└── .gitlab-ci.yml
+│   └── test_app.py    Automated tests
+├── .gitlab-ci.yml     GitLab CI/CD pipeline
+├── .pylintrc          Pylint configuration
+└── .dockerignore      Docker build exclusions
 ```
 
 ## Requirements
 
+Install these tools before running the project locally:
+
 - Python 3.12 or newer
-- Docker Desktop for container use
+- Docker Desktop
 - Git
 
-Dependencies are pinned in `requirements.txt`: Flask, Gunicorn, Pytest, and Pylint.
+The project uses Flask, Gunicorn, Pytest, and Pylint. Exact versions are pinned in `requirements.txt`.
 
-## Run Locally with Python
+## Run Locally
+
+### Linux or Git Bash
 
 ```bash
 python3 -m venv .venv
@@ -62,7 +103,7 @@ python -m pip install -r requirements.txt
 python app.py
 ```
 
-On Windows PowerShell:
+### Windows PowerShell
 
 ```powershell
 py -m venv .venv
@@ -71,39 +112,55 @@ python -m pip install -r requirements.txt
 python app.py
 ```
 
-The application listens on `http://localhost:4545` by default.
+The development server runs at:
+
+```text
+http://localhost:4545
+```
 
 ## Configuration
 
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `APP_NAME` | `ProgreeApp` | Name shown on the home page |
-| `APP_ENV` | `development` | Environment shown on the home page |
-| `PORT` | `4545` | Development server port |
+The application supports these environment variables:
+
+- `APP_NAME` changes the name shown on the home page. Default: `ProgreeApp`.
+- `APP_ENV` changes the displayed environment. Default: `development`.
+- `PORT` changes the development server port. Default: `4545`.
 
 Example:
 
 ```bash
-APP_NAME=Demo APP_ENV=staging PORT=5000 python app.py
+APP_NAME=Task3 APP_ENV=staging PORT=5000 python app.py
 ```
 
-## Tests and Lint
+## Run Tests and Lint
 
 ```bash
 python -m pytest -v tests/
 python -m pylint app.py
 ```
 
-The expected result is three passing tests and a clean Pylint report.
+Expected result:
+
+```text
+3 passed
+Your code has been rated at 10.00/10
+```
 
 ## Run with Docker
 
+Build the production image:
+
 ```bash
 docker build -t progreeapp:local .
+```
+
+Start the container:
+
+```bash
 docker run --rm --name progreeapp -p 4545:4545 progreeapp:local
 ```
 
-Verify the service:
+Test the health endpoint:
 
 ```bash
 curl http://localhost:4545/health
@@ -115,18 +172,24 @@ Expected response:
 {"status":"ok"}
 ```
 
-## CI/CD Pipeline
+Open the application at:
 
-The `.gitlab-ci.yml` file defines four stages:
+```text
+http://localhost:4545
+```
 
-1. **Lint** installs dependencies and runs Pylint.
-2. **Test** runs Pytest and stores a JUnit report.
-3. **Build** builds the Docker image and pushes it when registry credentials are available.
-4. **Deploy** records deployment status and is manual on `main`.
+## GitLab CI/CD Jobs
 
-The pipeline is configured for a GitLab Shell runner. Python jobs create a temporary virtual environment. The build job downloads the Docker CLI and uses the runner's mounted Docker socket.
+The pipeline file contains four jobs:
 
-## Health Check
+- `lint`: runs Pylint against `app.py`.
+- `unit_test`: runs Pytest and stores the JUnit report.
+- `build_image`: builds and optionally pushes the Docker image.
+- `deploy`: manually prints the deployment status report.
+
+To view results, open the GitLab project and select **Build > Pipelines**. Open a pipeline to see each job log and its status. Click the play button on `deploy` after the earlier stages pass.
+
+## Health Endpoint
 
 ```http
 GET /health
@@ -148,9 +211,12 @@ source .venv/bin/activate
 python -m pip install -r requirements.txt
 python -m pytest -v tests/
 python -m pylint app.py
+git add .
+git commit -m "Describe your change"
+git push
 ```
 
-Keep tests and lint passing before pushing changes. CI runs the same checks automatically.
+Keep tests and lint passing before pushing. The CI pipeline repeats these checks automatically.
 
 ## License
 
