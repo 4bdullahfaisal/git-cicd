@@ -79,7 +79,8 @@ The pipeline is configured for a GitLab Shell Runner. Python jobs create a tempo
 │   └── test_app.py    Automated tests
 ├── .gitlab-ci.yml     GitLab CI/CD pipeline
 ├── .pylintrc          Pylint configuration
-└── .dockerignore      Docker build exclusions
+├── .dockerignore      Docker build exclusions
+└── screenshots/       Project and pipeline screenshots
 ```
 
 ## Requirements
@@ -218,6 +219,24 @@ git push
 
 Keep tests and lint passing before pushing. The CI pipeline repeats these checks automatically.
 
-## License
+## Screenshots
 
-No license has been selected for this educational project yet.
+### Application and Docker Output
+
+![Application and Docker output](screenshots/Screenshot%202026-09-16%20165854.png)
+
+### GitLab Pipeline Overview
+
+![GitLab pipeline overview](screenshots/Screenshot%202026-09-16%20165909.png)
+
+### Lint and Test Jobs
+
+![Lint and test jobs](screenshots/Screenshot%202026-09-16%20165925.png)
+
+### Build Job
+
+![Docker build job](screenshots/Screenshot%202026-09-16%20165933.png)
+
+### Deployment Status
+
+![Deployment status](screenshots/Screenshot%202026-09-16%20170024.png)
