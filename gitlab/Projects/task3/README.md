@@ -221,22 +221,12 @@ Keep tests and lint passing before pushing. The CI pipeline repeats these checks
 
 ## Screenshots
 
-### Application and Docker Output
+![View1](screenshots/Screenshot%202026-09-16%20165854.png)
 
-![Application and Docker output](screenshots/Screenshot%202026-09-16%20165854.png)
+![View2](screenshots/Screenshot%202026-09-16%20165909.png)
 
-### GitLab Pipeline Overview
+![View3](screenshots/Screenshot%202026-09-16%20165925.png)
 
-![GitLab pipeline overview](screenshots/Screenshot%202026-09-16%20165909.png)
+![View4](screenshots/Screenshot%202026-09-16%20165933.png)
 
-### Lint and Test Jobs
-
-![Lint and test jobs](screenshots/Screenshot%202026-09-16%20165925.png)
-
-### Build Job
-
-![Docker build job](screenshots/Screenshot%202026-09-16%20165933.png)
-
-### Deployment Status
-
-![Deployment status](screenshots/Screenshot%202026-09-16%20170024.png)
+![View5](screenshots/Screenshot%202026-09-16%20170024.png)
